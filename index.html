@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Advanced QR App</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://unpkg.com/html5-qrcode"></script>
+
+<style>
+body{
+  margin:0;
+  font-family:'Poppins', sans-serif;
+  background:#0b1220;
+  color:white;
+}
+
+/* HEADER */
+.header{
+  text-align:center;
+  padding:15px;
+  background:#111827;
+  font-size:20px;
+  font-weight:600;
+}
+
+/* PAGES */
+.page{
+  display:none;
+  padding:15px;
+}
+
+/* SHOW FIRST PAGE */
+#scan{
+  display:block;
+}
+
+/* SCANNER BOX */
+.scan-box{
+  width:260px;
+  height:260px;
+  margin:auto;
+  position:relative;
+  border-radius:20px;
+  border:2px solid #22c55e;
+  overflow:hidden;
+  box-shadow:0 0 25px rgba(34,197,94,0.4);
+}
+
+/* SCAN ANIMATION */
+.scan-line{
+  position:absolute;
+  width:100%;
+  height:6px;
+  background:linear-gradient(to right, transparent, #22c55e, transparent);
+  animation:scan 1.5s infinite ease-in-out;
+}
+
+@keyframes scan{
+  0%{top:0; opacity:0.3;}
+  50%{top:100%; opacity:1;}
+  100%{top:0; opacity:0.3;}
+}
+
+/* INPUT */
+input{
+  width:90%;
+  padding:10px;
+  margin:8px 0;
+  border:none;
+  border-radius:10px;
+}
+
+/* BUTTON */
+button{
+  padding:10px 15px;
+  border:none;
+  border-radius:10px;
+  margin-top:10px;
+  cursor:pointer;
+}
+
+.green{background:#22c55e;color:white;}
+.blue{background:#3b82f6;color:white;}
+
+/* QR */
+#qrcode{
+  margin-top:15px;
+  background:white;
+  padding:10px;
+  display:inline-block;
+  border-radius:10px;
+}
+
+/* BOTTOM MENU */
+.nav{
+  position:fixed;
+  bottom:0;
+  width:100%;
+  display:flex;
+  justify-content:space-around;
+  padding:12px 0;
+  background:rgba(17,24,39,0.8);
+  backdrop-filter:blur(10px);
+  border-top:1px solid rgba(255,255,255,0.1);
+}
+
+.nav button{
+  background:none;
+  border:none;
+  color:#cbd5e1;
+  font-size:14px;
+  cursor:pointer;
+}
+
+.nav button:hover{
+  color:#22c55e;
+}
+</style>
+</head>
+
+<body>
+
+<div class="header">⚡ Advanced QR App</div>
+
+<!-- SCANNER -->
+<div id="scan" class="page">
+  <h3>🔍 Scanner</h3>
+
+  <div class="scan-box">
+    <div class="scan-line"></div>
+    <div id="reader"></div>
+  </div>
+
+  <p id="scanResult"></p>
+
+  <button class="blue" onclick="startScan()">Start Scan</button>
+</div>
+
+<!-- GENERATOR -->
+<div id="create" class="page">
+  <h3>📦 QR Generator</h3>
+
+  <input id="text" placeholder="Enter text or link">
+
+  <button class="green" onclick="generateQR()">Generate QR</button>
+
+  <div id="qrcode"></div>
+</div>
+
+<!-- HISTORY -->
+<div id="history" class="page">
+  <h3>📜 History</h3>
+  <div id="list"></div>
+</div>
+
+<!-- BOTTOM MENU -->
+<div class="nav">
+  <button onclick="show('scan')">🔍 Scan</button>
+  <button onclick="show('create')">📦 Create</button>
+  <button onclick="show('history')">📜 History</button>
+</div>
+
+<script>
+
+function show(page){
+  document.getElementById("scan").style.display="none";
+  document.getElementById("create").style.display="none";
+  document.getElementById("history").style.display="none";
+
+  document.getElementById(page).style.display="block";
+
+  if(page=="history") loadHistory();
+}
+
+/* SCAN */
+function startScan(){
+  let html5QrCode = new Html5Qrcode("reader");
+
+  Html5QrCode.getCameras().then(devices=>{
+    if(devices.length){
+      html5QrCode.start(
+        devices[0].id,
+        {fps:10, qrbox:200},
+        (text)=>{
+          document.getElementById("scanResult").innerText=text;
+          saveHistory("Scanned: "+text);
+          html5QrCode.stop();
+        }
+      );
+    }
+  });
+}
+
+/* GENERATE */
+function generateQR(){
+  let text=document.getElementById("text").value;
+
+  document.getElementById("qrcode").innerHTML="";
+
+  new QRCode(document.getElementById("qrcode"), text);
+
+  saveHistory("Generated: "+text);
+}
+
+/* HISTORY */
+function saveHistory(t){
+  let data=JSON.parse(localStorage.getItem("qr")||"[]");
+  data.push(t);
+  localStorage.setItem("qr",JSON.stringify(data));
+}
+
+function loadHistory(){
+  let data=JSON.parse(localStorage.getItem("qr")||"[]");
+  let html="";
+  data.reverse().forEach(i=>{
+    html+="<p>• "+i+"</p>";
+  });
+  document.getElementById("list").innerHTML=html;
+}
+
+</script>
+
+</body>
+</html>
